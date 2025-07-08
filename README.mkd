@@ -1,0 +1,95 @@
+# COM3505 Lab Assessment 2
+
+## Project Hierarchy
+
+-  `LA2/`: `README.mkd` and `rubric.mkd`
+-  `LA2/ProjectThing/`: Code files
+-  `LA2/ProjectThing/lib/weather/`: Weather API functionality
+-  `LA2/media/`: Image and video files
+
+## Description
+
+The device will start up and connect to a preset network. It is now ready to be used and is actively listening for the wakue up word "Marvin". Once the word is detected, the device will start recording audio for 3 seconds. The audio will then be processed and the device will complete an action and respond with a message based on it. Our Marvin is a smart home assistant that retains most of the original functionalities like turning on and off lights, telling jokes and saying something about life. On top of this, we implemented a functionality to tell the current weather using keywords such as "rainy", "cloudy", "sunny" etc.
+
+## Setup Instructions
+
+1. Clone the repo: `git@gitlab.com:Bravewave/com3505-student-2024.git`
+   * `https://gitlab.com/Bravewave/com3505-student-2024.git` if you haven't set up a GitLab SSH key (security fans... avert your eyes)
+2. Go to lines 8 and 9 in `marvin-private.h` and replace _MULTI_SSID1 and _MULTI_KEY1 with your own network's SSID and Password.
+3. Build and upload the firmware to the ESP32 Feather
+	* The board should be in bootloader mode by default.
+4. Wait for the device to flash the firmware and restart. It will automatically connect to the network and perform all the necessary steps to be ready for use.
+5. The device is now ready to be used. Say "Marvin" to wake it up and give it a command.
+
+# Media
+
+### Video
+
+[Marvin working as intended (/media/marvin.mp4)](https://gitlab.com/Bravewave/com3505-student-2024/-/blob/main/LA2/media/marvin.mp4?ref_type=heads)
+
+# Documentation
+
+The hardest thing about this project was understanding and getting the original Marvin functionalities to work. After setting up the board, we went through the GitHub repository provided in section 8.4.1 of the course notes so we could set everything up exactly as it should be; however, it did not work as expected and we had to make a couple critical changes to the code in order to get it to work:
+
+## Base functionality
+
+### SPIFFS Errors
+
+The SPIFFS file system would fail, seemingly at random, so we added some error handling code to ensure it was working correctly and if it failed, it would format the file system. As part of this error handling, we also ensure that Marvin can create and read a txt file, by having him do it and closing the file right after. (`main.cpp`:131-156).
+
+### Intent Mismatch
+
+As it was in the original code, Marvin could understand us (we verified this by reducing the required wake word certainty to 0.01 and consequently saw that the microphone was indeed working), however he would not respond due to the Intent not being checked correctly. The intention that we are instructed to set up using Wit.AI was `Turn_off_and_on`, while the code was checking for the intent `Turn_on_device`. This made it so it would never reach the correct case and would not do anything. We changed the case to `Turn_off_and_on` and it worked as expected. The `turnOnDevice()` function is capable of turning a light both on and off, so the same function can be used for both functionalities. We also utilised `trait_value` to determine whether we want to turn the light on or off (`IntentProcessor.cpp`:106-113).
+
+## Weather App
+
+Once we figured everything out and got Marvin working as intended, we implemened a further weather app functionality. This would allow us to implement extra functionality without requiring live TTS requests (which require significant amounts of authentication), or uploading many new `.wav` files, which the ESP32 does not have enough flash memory to hold.
+
+### API
+
+We used the OpenWeatherMap API (https://openweathermap.org/) to get a location and current weather for that location, and Marvin replies with a message based on the weather. The API that gets the actual weather data only works using latitude and longitude, not locations, so we used their Geocoding API to obtain the coordinates of a spoken location, which we then passsed to their main Real Time Weather API. Getting the latitude and longitude was a challenge as this data was in a fairly big JSON file that we could not parse with the ESP32 because of memory limitations. We used string manipulation to get around this problem. After this, we use the latitude and longitude we got from the last step to get the weather data. We then parse this data and get Marvin to say a keyword that describes the weather. The options are "sunny", "cloudy", "rainy", "snowy", "stormy", "foggy" and "clear". 
+
+### Response .wav Files
+
+We recorded new response audio files using [Google's TTS service](https://console.cloud.google.com/vertex-ai/generative/speech/text-to-speech?project=marvin-424212) and downloaded them. These files had to be formatted to the correct sample rate (16kHz) and bitrate (16-bit signed PCM). The method of doing so in Audacity is shown below:
+
+![Setting sample rate to 16kHz](media/audacity1.png)
+![Setting bitrate to 16-bit PCM](media/audacity2.png)
+
+The SPIFFS file system also had to be reconfigured to accept the extra files. This is done in `main.cpp`:108 with `SPIFFS.begin(true, "/spiffs", 13)`.
+
+The new files could then be uploaded to the chip using the Platform.io CLI: `pio run --target uploadfs`.
+
+### Wit.AI Weather Intent
+
+To set up the Wit.AI, we followed the instructions in video provided by the git provided in section 8.4.1 of the course notes. Following this video sets up the base Marvin functionalities of turning on and off LEDs, telling jokes and talking about life. This was where we ran into the problem mentioned above, where the intention we were told to set up was different from the one the code was checking for. We also had to set up the Wit.AI to understand the weather requests. To do this, we created a new intent called "Weather" and set the entity to `wit/location`. We then added some sample sentences that would trigger this intent and added some entities to these sentences, subsequently training and testing the model to make sure it was working as expected.
+
+### Weather Class
+
+To get this working, we implemented a Weather class that would handle all the weather functionality. `Weather.h` defines 3 public functions `parseCoordinates()`, `getWeatherCode()` and `makeApiRequest()`. In `Weather.cpp`, these functions are implemented to get coordinate data and weather information, given a location name. The class also contrains a private helper function to convert floats to Strings.
+
+All of this was implemented using the functionalities from the OpenWeatherMap API. For the puroses of this project, we used the free tier of the API, which has a limit of 1,000 API requests per day. The API key is hardcoded into the request URL - we are aware this is not a secure solution and in a real-life project that is to be deployed to end users, an alternative method such as storing it in a `#define` statement in `marvin-private.h` ought to be used.
+
+### Customising the Intent Structure
+
+With all this done, we tested our Marvin out but we ran into a problem where everything was being recognised correctly, but the default `Intent` structure, as defined in `WitAiChunkedUploader.h`:9-20, was not set up to search for a location field. Following the same pattern used in the associated `.cpp` file for the device name and confidence, we amended the Intent class structure to include these for location data also.
+
+### Speaker Logic
+
+We added the function `playWeather()` in the Weather class to handle the logic determining which response to play. This is simply a case of utilising a switch statement to handle each response code. We have bundled all of the "7xx" responses (which include Smoke, Haze, and Mist, amongst others) into "Foggy", due to space constraints on the chip not allwoing us to upload enough audio files to handle every response.
+
+# Evaluation
+
+### Overall
+
+We are very happy with how the project turned out. We had switched ideas and plans a few times, mainly due to the ESP32's limitations: due to struggled getting the ESP32 to generate JWT web tokens, authenticating with Google APIs became a problem, and we faced similar issues trying to get TTS services such as IBM Watson's to work.
+
+Due to the nature of such microcontrollers, a lot of the project has been very fiddly, with the soldering work on the speaker amp being a little sub-par and the ESP occasionally being very fickle and swapping serial ports seemingly at random. The wires connecting the ESP to the amp board were a little tetchy, so the speaker output was rather quiet and unclear unless we held the wires in a speciic position.
+
+### Speaker Volume & Clarity
+
+We also ran into problems getting the speaker to work properly, due to either faulty wiring/soldering or faulty components (we suspect the former). This affects the overall quality of the speaker but not the functionality so we figured it was not a critical issue. In the end we had to have one of us holding the wires in the submission video so everything made good contact and the speaker could be heard properly.
+
+### Future Adaptations
+
+The immediate improvement that comes to mind is the way the API request is handled. The function could definitely be modified to not hard-code the API key into the request string, as well as to allow for more variation in request types. On top of this, soldering work on the speaker amplifier could be much more proficiently done, and the wires could have been stripped to make them shorter, and as a result not create such a spaghetti-like mess on the breadboard.
