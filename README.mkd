@@ -1,7 +1,6 @@
 # DIY Alexa Project ("Marvin")
 
-Code repository for third year IoT project, creating a DIY Alexa (dubbed "Marvin") on an Adafeather ESP32 using C++ for embedded systems and Arduino wrapper. Heavily based on and adapted from `https://github.com/atomic14/diy-alexa` by atomic14.
-
+Code repository for third year IoT project, creating a DIY Alexa (dubbed "Marvin") on an Adafeather ESP32 using C++ for embedded systems and Arduino wrapper. Adapted from and heavily based on https://github.com/atomic14/diy-alexa by atomic14.
 This project was worked on jointly by myself and a coursemate of mine.
 
 ## Description
