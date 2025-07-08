@@ -1,11 +1,6 @@
 # COM3505 Lab Assessment 2
 
-## Project Hierarchy
-
--  `LA2/`: `README.mkd` and `rubric.mkd`
--  `LA2/ProjectThing/`: Code files
--  `LA2/ProjectThing/lib/weather/`: Weather API functionality
--  `LA2/media/`: Image and video files
+Code repository for third year IoT project, creating a DIY Alexa (dubbed "Marvin") on an Adafeather ESP32 using C++ for embedded systems and Arduino wrapper. Heavily based on and adapted from `https://github.com/atomic14/diy-alexa` by atomic14.
 
 ## Description
 
@@ -13,8 +8,8 @@ The device will start up and connect to a preset network. It is now ready to be 
 
 ## Setup Instructions
 
-1. Clone the repo: `git@gitlab.com:Bravewave/com3505-student-2024.git`
-   * `https://gitlab.com/Bravewave/com3505-student-2024.git` if you haven't set up a GitLab SSH key (security fans... avert your eyes)
+1. Clone the repo: `git@github.com:Bravewave/ESP32-Marvin.git`
+   * `https://github.com/Bravewave/ESP32-Marvin` if you haven't set up a GitLab SSH key (security fans... avert your eyes)
 2. Go to lines 8 and 9 in `marvin-private.h` and replace _MULTI_SSID1 and _MULTI_KEY1 with your own network's SSID and Password.
 3. Build and upload the firmware to the ESP32 Feather
 	* The board should be in bootloader mode by default.
@@ -25,7 +20,7 @@ The device will start up and connect to a preset network. It is now ready to be 
 
 ### Video
 
-[Marvin working as intended (/media/marvin.mp4)](https://gitlab.com/Bravewave/com3505-student-2024/-/blob/main/LA2/media/marvin.mp4?ref_type=heads)
+[Marvin working as intended](https://drive.google.com/file/d/1U7cE2_ODi2rQgTW7T0g2MR3ks_80uNkz/view?usp=sharing)
 
 # Documentation
 
