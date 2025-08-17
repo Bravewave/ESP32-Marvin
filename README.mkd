@@ -72,7 +72,7 @@ With all this done, we tested our Marvin out but we ran into a problem where eve
 
 ### Speaker Logic
 
-We added the function `playWeather()` in the Weather class to handle the logic determining which response to play. This is simply a case of utilising a switch statement to handle each response code. We have bundled all of the "7xx" responses (which include Smoke, Haze, and Mist, amongst others) into "Foggy", due to space constraints on the chip not allwoing us to upload enough audio files to handle every response.
+We added the function `playWeather()` in the Weather class to handle the logic determining which response to play. This is simply a case of utilising a switch statement to handle each response code. We have bundled all of the "7xx" responses (which include Smoke, Haze, and Mist, amongst others) into "Foggy", due to space constraints on the chip not allowing us to upload enough audio files to handle every response.
 
 # Evaluation
 
